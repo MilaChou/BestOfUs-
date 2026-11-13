@@ -7,6 +7,7 @@ class Settings(BaseSettings):
     app_name: str = "BestOfUs"
     debug: bool = False
     api_prefix: str = "/api/v1"
+    database_url: str = "sqlite:///./bestofus.db"
 
 
 settings = Settings()

@@ -10,3 +10,6 @@ __pycache__/
 # Tooling
 .pytest_cache/
 .ruff_cache/
+
+# Local SQLite database
+*.db
