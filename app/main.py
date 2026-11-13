@@ -1,0 +1,13 @@
+from fastapi import FastAPI
+
+from app.api import health
+from app.config import settings
+
+app = FastAPI(
+    title=settings.app_name,
+    description="A shared digital space for couples to organize their everyday life.",
+    version="0.1.0",
+    debug=settings.debug,
+)
+
+app.include_router(health.router, prefix=settings.api_prefix)
