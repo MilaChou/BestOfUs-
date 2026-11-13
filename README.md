@@ -8,7 +8,7 @@ Requires [uv](https://docs.astral.sh/uv/).
 
 ```bash
 uv sync                      # install dependencies
-cp .env.example .env         # local settings
+cp .env.example .env         # local settings, then fill in SECRET_KEY (see the comment there)
 uv run alembic upgrade head  # create / update the database tables
 uv run fastapi dev           # dev server at http://127.0.0.1:8000 (docs at /docs)
 uv run pytest                # tests

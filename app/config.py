@@ -9,5 +9,10 @@ class Settings(BaseSettings):
     api_prefix: str = "/api/v1"
     database_url: str = "sqlite:///./bestofus.db"
 
+    # Signs login tokens. Required, no default: must be a long random string in .env.
+    # Generate one with: python3 -c "import secrets; print(secrets.token_urlsafe(32))"
+    secret_key: str
+    access_token_expire_minutes: int = 60 * 24 * 7  # one week
+
 
 settings = Settings()
