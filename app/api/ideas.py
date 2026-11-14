@@ -2,14 +2,15 @@ import random
 from datetime import UTC, datetime
 from typing import Annotated
 
-from fastapi import APIRouter, HTTPException, Query, status
+from fastapi import APIRouter, BackgroundTasks, HTTPException, Query, status
 from sqlalchemy import func, select
 
 from app.api.deps import CurrentCouple, CurrentUser
 from app.catalog import ACTIVITIES, ACTIVITIES_BY_ID
 from app.database import DbSession
-from app.enums import BUDGET_ORDER, Budget, Cuisine, Format, TimeOfDay
+from app.enums import BUDGET_ORDER, Budget, Cuisine, Format, NotificationType, TimeOfDay
 from app.models import Couple, Idea, IdeaWant
+from app.notifications import notify_partner
 from app.schemas.idea import (
     CatalogActivityRead,
     IdeaCreate,
@@ -29,6 +30,18 @@ def get_couple_idea(idea_id: int, couple: Couple, db: DbSession) -> Idea:
     if idea is None or idea.couple_id != couple.id:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Idea not found")
     return idea
+
+
+def notify_idea_added(db: DbSession, background: BackgroundTasks, user, idea: Idea) -> None:
+    notify_partner(
+        db,
+        background,
+        user,
+        NotificationType.IDEA_ADDED,
+        "💡 Новая идея",
+        f"«{idea.title}»",
+        {"idea_id": idea.id},
+    )
 
 
 @router.get("", response_model=list[IdeaRead])
@@ -60,11 +73,19 @@ def list_ideas(
 
 
 @router.post("", response_model=IdeaRead, status_code=status.HTTP_201_CREATED)
-def create_idea(data: IdeaCreate, user: CurrentUser, couple: CurrentCouple, db: DbSession) -> Idea:
+def create_idea(
+    data: IdeaCreate,
+    user: CurrentUser,
+    couple: CurrentCouple,
+    db: DbSession,
+    background: BackgroundTasks,
+) -> Idea:
     # The author obviously wants it, so their ❤️ is there from the start.
     idea = Idea(**data.model_dump(), couple=couple, author_id=user.id)
     idea.wants.append(IdeaWant(user_id=user.id))
     db.add(idea)
+    db.flush()
+    notify_idea_added(db, background, user, idea)
     db.commit()
     db.refresh(idea)
     return idea
@@ -119,7 +140,11 @@ def suggest(
     "/from-catalog/{catalog_id}", response_model=IdeaRead, status_code=status.HTTP_201_CREATED
 )
 def save_from_catalog(
-    catalog_id: str, user: CurrentUser, couple: CurrentCouple, db: DbSession
+    catalog_id: str,
+    user: CurrentUser,
+    couple: CurrentCouple,
+    db: DbSession,
+    background: BackgroundTasks,
 ) -> Idea:
     """Liked a suggestion from the catalog? Save it to your own ideas."""
     activity = ACTIVITIES_BY_ID.get(catalog_id)
@@ -146,6 +171,8 @@ def save_from_catalog(
     )
     idea.wants.append(IdeaWant(user_id=user.id))
     db.add(idea)
+    db.flush()
+    notify_idea_added(db, background, user, idea)
     db.commit()
     db.refresh(idea)
     return idea
@@ -211,11 +238,28 @@ def mark_undone(idea_id: int, couple: CurrentCouple, db: DbSession) -> Idea:
 
 
 @router.post("/{idea_id}/want", response_model=IdeaRead)
-def want(idea_id: int, user: CurrentUser, couple: CurrentCouple, db: DbSession) -> Idea:
+def want(
+    idea_id: int,
+    user: CurrentUser,
+    couple: CurrentCouple,
+    db: DbSession,
+    background: BackgroundTasks,
+) -> Idea:
     """«Хочу тоже!» ❤️ Pressing it twice changes nothing."""
     idea = get_couple_idea(idea_id, couple, db)
     if user.id not in idea.wanted_by:
         idea.wants.append(IdeaWant(user_id=user.id))
+        both = len(idea.wants) >= 2
+        title = "❤️ Вы оба этого хотите!" if both else "❤️ Хочет тоже!"
+        notify_partner(
+            db,
+            background,
+            user,
+            NotificationType.IDEA_WANTED,
+            title,
+            f"«{idea.title}»",
+            {"idea_id": idea.id},
+        )
         db.commit()
         db.refresh(idea)
     return idea

@@ -17,5 +17,9 @@ class Settings(BaseSettings):
     # Where uploaded photos are stored on disk (not in git).
     media_dir: str = "media"
 
+    # Push notifications go through Expo's free push service to Apple and Google.
+    expo_push_url: str = "https://exp.host/--/api/v2/push/send"
+    expo_access_token: str | None = None  # optional, from expo.dev if "enhanced security" is on
+
 
 settings = Settings()

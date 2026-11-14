@@ -1,12 +1,13 @@
 from datetime import UTC, datetime
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, BackgroundTasks, HTTPException, status
 from sqlalchemy import select
 
 from app.api.deps import CurrentUser
 from app.database import DbSession
-from app.enums import WishPriority
+from app.enums import NotificationType, WishPriority
 from app.models import User, Wish
+from app.notifications import notify_partner
 from app.schemas.wish import MyWishRead, PartnerWishRead, WishCreate, WishUpdate
 
 router = APIRouter(prefix="/wishlist", tags=["wishlist"])
@@ -49,9 +50,21 @@ def my_wishlist(user: CurrentUser, db: DbSession, is_received: bool | None = Non
 
 
 @router.post("/me", response_model=MyWishRead, status_code=status.HTTP_201_CREATED)
-def add_wish(data: WishCreate, user: CurrentUser, db: DbSession) -> Wish:
+def add_wish(
+    data: WishCreate, user: CurrentUser, db: DbSession, background: BackgroundTasks
+) -> Wish:
     wish = Wish(**data.model_dump(), owner_id=user.id)
     db.add(wish)
+    db.flush()
+    notify_partner(
+        db,
+        background,
+        user,
+        NotificationType.WISH_ADDED,
+        "🎁 Новое желание в вишлисте",
+        f"«{wish.title}»",
+        {"wish_id": wish.id},
+    )
     db.commit()
     db.refresh(wish)
     return wish

@@ -1,19 +1,35 @@
 from datetime import date
 from typing import Annotated
 
-from fastapi import APIRouter, File, HTTPException, UploadFile, status
+from fastapi import APIRouter, BackgroundTasks, File, HTTPException, UploadFile, status
 from fastapi.responses import FileResponse
 from sqlalchemy import select
 
 from app.api.deps import CurrentCouple, CurrentUser
 from app.database import DbSession
+from app.enums import NotificationType
 from app.media import delete_photo_file, photo_path, save_photo
-from app.models import Couple, Idea, Memory, MemoryPhoto
+from app.models import Couple, Idea, Memory, MemoryPhoto, User
+from app.notifications import notify_partner
 from app.schemas.memory import MemoryCreate, MemoryRead, MemoryUpdate
 
 router = APIRouter(prefix="/couple/memories", tags=["memories"])
 
 MAX_PHOTOS = 10
+
+
+def notify_memory_added(
+    db: DbSession, background: BackgroundTasks, user: User, memory: Memory
+) -> None:
+    notify_partner(
+        db,
+        background,
+        user,
+        NotificationType.MEMORY_ADDED,
+        "📸 Новое воспоминание",
+        f"«{memory.title}»",
+        {"memory_id": memory.id},
+    )
 
 
 def get_couple_memory(memory_id: int, couple: Couple, db: DbSession) -> Memory:
@@ -51,11 +67,17 @@ def on_this_day(couple: CurrentCouple, db: DbSession) -> list[Memory]:
 
 @router.post("", response_model=MemoryRead, status_code=status.HTTP_201_CREATED)
 def create_memory(
-    data: MemoryCreate, user: CurrentUser, couple: CurrentCouple, db: DbSession
+    data: MemoryCreate,
+    user: CurrentUser,
+    couple: CurrentCouple,
+    db: DbSession,
+    background: BackgroundTasks,
 ) -> Memory:
     """Create a memory. Add photos to it afterwards with POST /{id}/photos."""
     memory = Memory(**data.model_dump(), couple=couple, author_id=user.id)
     db.add(memory)
+    db.flush()
+    notify_memory_added(db, background, user, memory)
     db.commit()
     db.refresh(memory)
     return memory
@@ -63,7 +85,11 @@ def create_memory(
 
 @router.post("/from-idea/{idea_id}", response_model=MemoryRead, status_code=status.HTTP_201_CREATED)
 def create_from_idea(
-    idea_id: int, user: CurrentUser, couple: CurrentCouple, db: DbSession
+    idea_id: int,
+    user: CurrentUser,
+    couple: CurrentCouple,
+    db: DbSession,
+    background: BackgroundTasks,
 ) -> Memory:
     """Turn a done idea into a memory: its title, review and the day it was done."""
     idea = db.get(Idea, idea_id)
@@ -87,6 +113,8 @@ def create_from_idea(
         happened_on=idea.done_at.date(),
     )
     db.add(memory)
+    db.flush()
+    notify_memory_added(db, background, user, memory)
     db.commit()
     db.refresh(memory)
     return memory
@@ -126,8 +154,10 @@ def delete_memory(memory_id: int, couple: CurrentCouple, db: DbSession) -> None:
 def upload_photos(
     memory_id: int,
     files: Annotated[list[UploadFile], File(description="Up to 10 photos per memory, 10 MB each")],
+    user: CurrentUser,
     couple: CurrentCouple,
     db: DbSession,
+    background: BackgroundTasks,
 ) -> Memory:
     memory = get_couple_memory(memory_id, couple, db)
     if len(memory.photos) + len(files) > MAX_PHOTOS:
@@ -142,6 +172,15 @@ def upload_photos(
             filename, content_type = save_photo(upload)
             saved.append(filename)
             memory.photos.append(MemoryPhoto(filename=filename, content_type=content_type))
+        notify_partner(
+            db,
+            background,
+            user,
+            NotificationType.PHOTOS_ADDED,
+            "📸 Новые фото",
+            f"{len(files)} фото в «{memory.title}»",
+            {"memory_id": memory.id},
+        )
         db.commit()
     except Exception:
         # One bad file -> nothing is kept, so there are no half-uploaded memories.

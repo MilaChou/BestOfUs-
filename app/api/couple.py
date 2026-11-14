@@ -1,11 +1,13 @@
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, BackgroundTasks, HTTPException, status
 from sqlalchemy import or_, select, update
 
 from app.api.deps import CurrentCouple, CurrentUser
 from app.database import DbSession
+from app.enums import NotificationType
 from app.media import delete_photo_file
 from app.models import Couple, Wish
 from app.models.couple import generate_invite_code
+from app.notifications import notify_partner
 from app.schemas.couple import CoupleCreate, CoupleJoin, CoupleRead, CoupleUpdate
 
 router = APIRouter(prefix="/couple", tags=["couple"])
@@ -35,7 +37,9 @@ def create_couple(data: CoupleCreate, user: CurrentUser, db: DbSession) -> Coupl
 
 
 @router.post("/join", response_model=CoupleRead)
-def join_couple(data: CoupleJoin, user: CurrentUser, db: DbSession) -> Couple:
+def join_couple(
+    data: CoupleJoin, user: CurrentUser, db: DbSession, background: BackgroundTasks
+) -> Couple:
     """Join the partner's couple with their invite code."""
     if user.couple is not None:
         raise HTTPException(
@@ -52,6 +56,14 @@ def join_couple(data: CoupleJoin, user: CurrentUser, db: DbSession) -> Couple:
     couple.members.append(user)
     if couple.is_full:
         couple.invite_code = None
+    notify_partner(
+        db,
+        background,
+        user,
+        NotificationType.PARTNER_JOINED,
+        "💑 Вы теперь пара!",
+        "теперь мы вместе 💕",
+    )
     db.commit()
     db.refresh(couple)
     return couple

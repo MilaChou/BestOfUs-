@@ -10,6 +10,7 @@ from app.api import (
     ideas,
     love_language,
     memories,
+    notifications,
     tasks,
     users,
     wishlist,
@@ -35,3 +36,4 @@ app.include_router(gifts.router, prefix=settings.api_prefix)
 app.include_router(tasks.router, prefix=settings.api_prefix)
 app.include_router(memories.router, prefix=settings.api_prefix)
 app.include_router(love_language.router, prefix=settings.api_prefix)
+app.include_router(notifications.router, prefix=settings.api_prefix)

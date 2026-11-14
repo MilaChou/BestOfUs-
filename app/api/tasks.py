@@ -1,13 +1,14 @@
 from datetime import UTC, date, datetime, timedelta
 from typing import Literal
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, BackgroundTasks, HTTPException, status
 from sqlalchemy import or_, select
 
 from app.api.deps import CurrentCouple, CurrentUser
 from app.database import DbSession
-from app.enums import TaskCategory
-from app.models import Couple, Task
+from app.enums import NotificationType, TaskCategory
+from app.models import Couple, Task, User
+from app.notifications import notify_partner
 from app.schemas.task import TaskCreate, TaskRead, TaskUpdate
 
 router = APIRouter(prefix="/couple/tasks", tags=["tasks"])
@@ -26,6 +27,24 @@ def check_assignee(assignee_id: int | None, couple: Couple) -> None:
             status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             detail="assignee_id must be a member of your couple",
         )
+
+
+def describe(task: Task) -> str:
+    text = f"«{task.title}»"
+    if task.due_date is not None:
+        text += f", до {task.due_date:%d.%m}"
+    return text
+
+
+def notify_about_task(
+    db: DbSession, background: BackgroundTasks, user: User, task: Task, assigned_now: bool
+) -> None:
+    partner = user.partner
+    if assigned_now and partner is not None and task.assignee_id == partner.id:
+        type, title = NotificationType.TASK_ASSIGNED, "📋 Задача для тебя"
+    else:
+        type, title = NotificationType.TASK_ADDED, "📋 Новая задача"
+    notify_partner(db, background, user, type, title, describe(task), {"task_id": task.id})
 
 
 @router.get("", response_model=list[TaskRead])
@@ -64,10 +83,18 @@ def list_tasks(
 
 
 @router.post("", response_model=TaskRead, status_code=status.HTTP_201_CREATED)
-def create_task(data: TaskCreate, user: CurrentUser, couple: CurrentCouple, db: DbSession) -> Task:
+def create_task(
+    data: TaskCreate,
+    user: CurrentUser,
+    couple: CurrentCouple,
+    db: DbSession,
+    background: BackgroundTasks,
+) -> Task:
     check_assignee(data.assignee_id, couple)
     task = Task(**data.model_dump(), couple=couple, author_id=user.id)
     db.add(task)
+    db.flush()  # gives the task its id for the notification
+    notify_about_task(db, background, user, task, assigned_now=True)
     db.commit()
     db.refresh(task)
     return task
@@ -79,13 +106,25 @@ def read_task(task_id: int, couple: CurrentCouple, db: DbSession) -> Task:
 
 
 @router.patch("/{task_id}", response_model=TaskRead)
-def update_task(task_id: int, data: TaskUpdate, couple: CurrentCouple, db: DbSession) -> Task:
+def update_task(
+    task_id: int,
+    data: TaskUpdate,
+    user: CurrentUser,
+    couple: CurrentCouple,
+    db: DbSession,
+    background: BackgroundTasks,
+) -> Task:
     task = get_couple_task(task_id, couple, db)
     changes = data.model_dump(exclude_unset=True)
     if "assignee_id" in changes:
         check_assignee(changes["assignee_id"], couple)
+    old_assignee = task.assignee_id
     for field, value in changes.items():
         setattr(task, field, value)
+    # Only reassigning a task to the partner is worth a notification, not every edit.
+    partner = user.partner
+    if partner is not None and task.assignee_id == partner.id != old_assignee:
+        notify_about_task(db, background, user, task, assigned_now=True)
     db.commit()
     db.refresh(task)
     return task
@@ -98,11 +137,28 @@ def delete_task(task_id: int, couple: CurrentCouple, db: DbSession) -> None:
 
 
 @router.post("/{task_id}/done", response_model=TaskRead)
-def mark_done(task_id: int, user: CurrentUser, couple: CurrentCouple, db: DbSession) -> Task:
+def mark_done(
+    task_id: int,
+    user: CurrentUser,
+    couple: CurrentCouple,
+    db: DbSession,
+    background: BackgroundTasks,
+) -> Task:
     task = get_couple_task(task_id, couple, db)
+    was_done = task.is_done
     task.is_done = True
     task.done_at = datetime.now(UTC)
     task.done_by_id = user.id
+    if not was_done:
+        notify_partner(
+            db,
+            background,
+            user,
+            NotificationType.TASK_DONE,
+            "✅ Задача выполнена",
+            f"«{task.title}»",
+            {"task_id": task.id},
+        )
     db.commit()
     db.refresh(task)
     return task

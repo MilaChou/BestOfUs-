@@ -1,11 +1,12 @@
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, BackgroundTasks, HTTPException, status
 from sqlalchemy import select
 
 from app.api.deps import CurrentUser
 from app.database import DbSession
-from app.enums import LoveLanguage
+from app.enums import LoveLanguage, NotificationType
 from app.love_language import INFO, QUESTIONS, leading, score
 from app.models import LoveLanguageResult, User
+from app.notifications import notify_partner
 from app.schemas.love_language import (
     LanguageScore,
     LanguageTip,
@@ -48,7 +49,9 @@ def get_test() -> TestRead:
 
 
 @router.post("/test", response_model=ResultRead)
-def submit_test(data: TestAnswers, user: CurrentUser, db: DbSession) -> ResultRead:
+def submit_test(
+    data: TestAnswers, user: CurrentUser, db: DbSession, background: BackgroundTasks
+) -> ResultRead:
     """Send all answers, get your result. Taking it again replaces the old result."""
     scores = score(data.answers)
     result = result_of(user, db)
@@ -57,6 +60,15 @@ def submit_test(data: TestAnswers, user: CurrentUser, db: DbSession) -> ResultRe
         db.add(result)
     else:
         result.scores = scores
+    notify_partner(
+        db,
+        background,
+        user,
+        NotificationType.LOVE_LANGUAGE_DONE,
+        "💕 Язык любви",
+        "тест пройден — посмотри, как проявлять любовь",
+        {"screen": "love_language_partner"},
+    )
     db.commit()
     db.refresh(result)
     return to_read(result)

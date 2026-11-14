@@ -23,3 +23,12 @@ Models live in `app/models/`. After changing a model:
 uv run alembic revision --autogenerate -m "describe the change"
 uv run alembic upgrade head
 ```
+
+### Daily reminders
+
+Birthdays, anniversaries, tasks for today and "on this day" memories are created by
+a job that should run once a day on the server (running it twice is safe):
+
+```bash
+uv run python -m app.reminders
+```

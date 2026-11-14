@@ -94,3 +94,40 @@ class LoveLanguage(StrEnum):
     GIFTS = "gifts"  # подарки
     SERVICE = "service"  # помощь делом
     TOUCH = "touch"  # прикосновения
+
+
+class NotificationCategory(StrEnum):
+    """What a user can switch on and off in settings."""
+
+    COUPLE = "couple"  # партнёр присоединился
+    TASKS = "tasks"  # партнёр добавил / поручил / выполнил задачу
+    IDEAS = "ideas"  # новая идея, ❤️
+    MEMORIES = "memories"  # новое воспоминание, фото
+    WISHLIST = "wishlist"  # новое желание в вишлисте партнёра
+    LOVE_LANGUAGE = "love_language"  # партнёр прошёл тест
+    BIRTHDAY = "birthday"  # скоро день рождения партнёра
+    ANNIVERSARY = "anniversary"  # годовщина, «вместе 1000 дней»
+    TASKS_DUE = "tasks_due"  # задачи на сегодня
+    ON_THIS_DAY = "on_this_day"  # «в этот день год назад»
+
+
+class NotificationType(StrEnum):
+    PARTNER_JOINED = "partner_joined"
+    TASK_ADDED = "task_added"
+    TASK_ASSIGNED = "task_assigned"
+    TASK_DONE = "task_done"
+    IDEA_ADDED = "idea_added"
+    IDEA_WANTED = "idea_wanted"
+    MEMORY_ADDED = "memory_added"
+    PHOTOS_ADDED = "photos_added"
+    WISH_ADDED = "wish_added"
+    LOVE_LANGUAGE_DONE = "love_language_done"
+    BIRTHDAY = "birthday"
+    ANNIVERSARY = "anniversary"
+    TASKS_TODAY = "tasks_today"
+    ON_THIS_DAY = "on_this_day"
+
+
+class DevicePlatform(StrEnum):
+    IOS = "ios"
+    ANDROID = "android"

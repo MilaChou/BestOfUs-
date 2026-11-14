@@ -11,6 +11,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.pool import StaticPool
 
+from app import push
 from app.config import settings
 from app.database import Base, get_db
 from app.main import app
@@ -76,3 +77,11 @@ def media_dir(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     """Uploaded photos go to a temporary folder in tests, never to the real media/."""
     monkeypatch.setattr(settings, "media_dir", str(tmp_path / "media"))
     return tmp_path / "media"
+
+
+@pytest.fixture(autouse=True)
+def pushed(monkeypatch: pytest.MonkeyPatch) -> list[dict]:
+    """Pushes are collected here instead of being sent to Expo."""
+    sent: list[dict] = []
+    monkeypatch.setattr(push, "send_messages", sent.extend)
+    return sent
