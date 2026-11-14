@@ -77,3 +77,20 @@ def budget_for_price(price: int | None) -> Budget | None:
     if price < 10_000:
         return Budget.MEDIUM
     return Budget.HIGH
+
+
+class TaskCategory(StrEnum):
+    SHOPPING = "shopping"  # покупки
+    HOME = "home"  # дом
+    HEALTH = "health"  # здоровье
+    MONEY = "money"  # деньги, счета
+    ERRANDS = "errands"  # дела: документы, записи
+    OTHER = "other"
+
+
+class LoveLanguage(StrEnum):
+    WORDS = "words"  # слова поддержки
+    TIME = "time"  # время вместе
+    GIFTS = "gifts"  # подарки
+    SERVICE = "service"  # помощь делом
+    TOUCH = "touch"  # прикосновения

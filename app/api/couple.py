@@ -3,6 +3,7 @@ from sqlalchemy import or_, select, update
 
 from app.api.deps import CurrentCouple, CurrentUser
 from app.database import DbSession
+from app.media import delete_photo_file
 from app.models import Couple, Wish
 from app.models.couple import generate_invite_code
 from app.schemas.couple import CoupleCreate, CoupleJoin, CoupleRead, CoupleUpdate
@@ -82,9 +83,14 @@ def leave_couple(user: CurrentUser, couple: CurrentCouple, db: DbSession) -> Non
         .values(reserved_by_id=None, reserved_at=None)
     )
     couple.members.remove(user)
+    files_to_delete: list[str] = []
     if not couple.members:
+        files_to_delete = [p.filename for m in couple.memories for p in m.photos]
         db.delete(couple)
     else:
         # The one who stays can invite someone again.
         couple.invite_code = new_unique_invite_code(db)
     db.commit()
+    # Only after the database change is saved, so a failed save loses no photos.
+    for filename in files_to_delete:
+        delete_photo_file(filename)

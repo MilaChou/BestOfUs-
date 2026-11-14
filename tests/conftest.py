@@ -3,6 +3,7 @@ import os
 os.environ.setdefault("SECRET_KEY", "test-secret-key-not-for-production")
 
 from collections.abc import Callable, Iterator
+from pathlib import Path
 
 import pytest
 from fastapi.testclient import TestClient
@@ -10,6 +11,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.pool import StaticPool
 
+from app.config import settings
 from app.database import Base, get_db
 from app.main import app
 
@@ -67,3 +69,10 @@ def make_couple(
         return mila, sasha
 
     return _make_couple
+
+
+@pytest.fixture(autouse=True)
+def media_dir(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
+    """Uploaded photos go to a temporary folder in tests, never to the real media/."""
+    monkeypatch.setattr(settings, "media_dir", str(tmp_path / "media"))
+    return tmp_path / "media"

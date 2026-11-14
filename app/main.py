@@ -1,6 +1,19 @@
 from fastapi import FastAPI
 
-from app.api import auth, catalog, couple, gift_notes, gifts, health, ideas, users, wishlist
+from app.api import (
+    auth,
+    catalog,
+    couple,
+    gift_notes,
+    gifts,
+    health,
+    ideas,
+    love_language,
+    memories,
+    tasks,
+    users,
+    wishlist,
+)
 from app.config import settings
 
 app = FastAPI(
@@ -19,3 +32,6 @@ app.include_router(catalog.router, prefix=settings.api_prefix)
 app.include_router(wishlist.router, prefix=settings.api_prefix)
 app.include_router(gift_notes.router, prefix=settings.api_prefix)
 app.include_router(gifts.router, prefix=settings.api_prefix)
+app.include_router(tasks.router, prefix=settings.api_prefix)
+app.include_router(memories.router, prefix=settings.api_prefix)
+app.include_router(love_language.router, prefix=settings.api_prefix)

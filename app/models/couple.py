@@ -9,6 +9,8 @@ from app.database import Base
 
 if TYPE_CHECKING:
     from app.models.idea import Idea
+    from app.models.memory import Memory
+    from app.models.task import Task
     from app.models.user import User
 
 MAX_MEMBERS = 2
@@ -37,6 +39,12 @@ class Couple(Base):
     members: Mapped[list["User"]] = relationship(back_populates="couple", order_by="User.id")
     # Ideas go away together with the couple.
     ideas: Mapped[list["Idea"]] = relationship(
+        back_populates="couple", cascade="all, delete-orphan"
+    )
+    tasks: Mapped[list["Task"]] = relationship(
+        back_populates="couple", cascade="all, delete-orphan"
+    )
+    memories: Mapped[list["Memory"]] = relationship(
         back_populates="couple", cascade="all, delete-orphan"
     )
 

@@ -14,5 +14,8 @@ class Settings(BaseSettings):
     secret_key: str
     access_token_expire_minutes: int = 60 * 24 * 7  # one week
 
+    # Where uploaded photos are stored on disk (not in git).
+    media_dir: str = "media"
+
 
 settings = Settings()
