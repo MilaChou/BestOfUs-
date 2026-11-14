@@ -2,7 +2,7 @@ import os
 
 os.environ.setdefault("SECRET_KEY", "test-secret-key-not-for-production")
 
-from collections.abc import Iterator
+from collections.abc import Callable, Iterator
 
 import pytest
 from fastapi.testclient import TestClient
@@ -34,3 +34,21 @@ def client(db_session: Session) -> Iterator[TestClient]:
     with TestClient(app) as test_client:
         yield test_client
     app.dependency_overrides.clear()
+
+
+@pytest.fixture
+def make_user(client: TestClient) -> Callable[[str], dict[str, str]]:
+    """Register a user and return auth headers for them: headers = make_user("Mila")."""
+
+    def _make_user(name: str) -> dict[str, str]:
+        email = f"{name.lower()}@example.com"
+        client.post(
+            "/api/v1/auth/register",
+            json={"email": email, "password": "secret123", "name": name},
+        )
+        response = client.post(
+            "/api/v1/auth/login", data={"username": email, "password": "secret123"}
+        )
+        return {"Authorization": f"Bearer {response.json()['access_token']}"}
+
+    return _make_user

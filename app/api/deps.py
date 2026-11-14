@@ -5,7 +5,7 @@ from fastapi.security import OAuth2PasswordBearer
 
 from app.config import settings
 from app.database import DbSession
-from app.models import User
+from app.models import Couple, User
 from app.security import decode_access_token
 
 # Tells FastAPI (and the "Authorize" button in /docs) where to get a token.
@@ -25,3 +25,15 @@ def get_current_user(token: Annotated[str, Depends(oauth2_scheme)], db: DbSessio
 
 
 CurrentUser = Annotated[User, Depends(get_current_user)]
+
+
+def get_current_couple(user: CurrentUser) -> Couple:
+    if user.couple is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="You are not in a couple yet",
+        )
+    return user.couple
+
+
+CurrentCouple = Annotated[Couple, Depends(get_current_couple)]
