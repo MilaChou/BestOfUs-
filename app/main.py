@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 
-from app.api import auth, couple, health, users
+from app.api import auth, catalog, couple, health, ideas, users
 from app.config import settings
 
 app = FastAPI(
@@ -14,3 +14,5 @@ app.include_router(health.router, prefix=settings.api_prefix)
 app.include_router(auth.router, prefix=settings.api_prefix)
 app.include_router(users.router, prefix=settings.api_prefix)
 app.include_router(couple.router, prefix=settings.api_prefix)
+app.include_router(ideas.router, prefix=settings.api_prefix)
+app.include_router(catalog.router, prefix=settings.api_prefix)

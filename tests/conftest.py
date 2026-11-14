@@ -52,3 +52,18 @@ def make_user(client: TestClient) -> Callable[[str], dict[str, str]]:
         return {"Authorization": f"Bearer {response.json()['access_token']}"}
 
     return _make_user
+
+
+@pytest.fixture
+def make_couple(
+    client: TestClient, make_user: Callable[[str], dict[str, str]]
+) -> Callable[[], tuple[dict[str, str], dict[str, str]]]:
+    """Two users joined into one couple: mila, sasha = make_couple()."""
+
+    def _make_couple() -> tuple[dict[str, str], dict[str, str]]:
+        mila, sasha = make_user("Mila"), make_user("Sasha")
+        code = client.post("/api/v1/couple", headers=mila, json={}).json()["invite_code"]
+        client.post("/api/v1/couple/join", headers=sasha, json={"invite_code": code})
+        return mila, sasha
+
+    return _make_couple

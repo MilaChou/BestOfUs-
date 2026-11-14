@@ -8,6 +8,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.database import Base
 
 if TYPE_CHECKING:
+    from app.models.idea import Idea
     from app.models.user import User
 
 MAX_MEMBERS = 2
@@ -34,6 +35,10 @@ class Couple(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
     members: Mapped[list["User"]] = relationship(back_populates="couple", order_by="User.id")
+    # Ideas go away together with the couple.
+    ideas: Mapped[list["Idea"]] = relationship(
+        back_populates="couple", cascade="all, delete-orphan"
+    )
 
     @property
     def is_full(self) -> bool:
