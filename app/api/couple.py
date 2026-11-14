@@ -1,9 +1,9 @@
 from fastapi import APIRouter, HTTPException, status
-from sqlalchemy import select
+from sqlalchemy import or_, select, update
 
 from app.api.deps import CurrentCouple, CurrentUser
 from app.database import DbSession
-from app.models import Couple
+from app.models import Couple, Wish
 from app.models.couple import generate_invite_code
 from app.schemas.couple import CoupleCreate, CoupleJoin, CoupleRead, CoupleUpdate
 
@@ -74,6 +74,13 @@ def update_couple(data: CoupleUpdate, couple: CurrentCouple, db: DbSession) -> C
 @router.post("/leave", status_code=status.HTTP_204_NO_CONTENT)
 def leave_couple(user: CurrentUser, couple: CurrentCouple, db: DbSession) -> None:
     """Leave the couple. The last one to leave deletes it."""
+    # Reservations ("Я подарю") between the two make no sense any more.
+    db.execute(
+        update(Wish)
+        .where(or_(Wish.owner_id == user.id, Wish.reserved_by_id == user.id))
+        .where(Wish.reserved_by_id.is_not(None))
+        .values(reserved_by_id=None, reserved_at=None)
+    )
     couple.members.remove(user)
     if not couple.members:
         db.delete(couple)

@@ -28,6 +28,13 @@ class User(Base):
     profile: Mapped["Profile"] = relationship(back_populates="user", cascade="all, delete-orphan")
     couple: Mapped["Couple | None"] = relationship(back_populates="members")
 
+    @property
+    def partner(self) -> "User | None":
+        """The other member of the couple, if there is one."""
+        if self.couple is None:
+            return None
+        return next((m for m in self.couple.members if m.id != self.id), None)
+
 
 class Profile(Base):
     """Personal details the partner can see. Everything except name is optional."""

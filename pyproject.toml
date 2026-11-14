@@ -30,6 +30,7 @@ select = ["E", "F", "I", "UP", "B"]
 [tool.ruff.lint.per-file-ignores]
 # One activity per line reads better than wrapped lines.
 "app/catalog.py" = ["E501"]
+"app/gift_catalog.py" = ["E501"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

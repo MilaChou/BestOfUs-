@@ -8,5 +8,6 @@ from app.database import Base
 from app.models.couple import Couple
 from app.models.idea import Idea, IdeaWant
 from app.models.user import Profile, User
+from app.models.wish import GiftNote, Wish
 
-__all__ = ["Base", "Couple", "Idea", "IdeaWant", "Profile", "User"]
+__all__ = ["Base", "Couple", "GiftNote", "Idea", "IdeaWant", "Profile", "User", "Wish"]
