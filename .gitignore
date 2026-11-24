@@ -16,3 +16,6 @@ __pycache__/
 
 # Uploaded photos
 media/
+
+# Local Claude preview config (machine-specific)
+.claude/launch.json

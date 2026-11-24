@@ -55,11 +55,11 @@ def birthday_reminders(db: Session, user: User, partner: User, today: date) -> l
         return []
     name = partner.profile.name
     title = {
-        7: f"🎂 Через неделю день рождения у {name}",
-        1: f"🎂 Завтра день рождения у {name}",
-        0: f"🎉 Сегодня день рождения у {name}!",
+        7: f"Через неделю день рождения у {name}",
+        1: f"Завтра день рождения у {name}",
+        0: f"Сегодня день рождения у {name}!",
     }[days]
-    body = "Загляни в вишлист — там есть идеи 🎁" if days else "Не забудь поздравить 💕"
+    body = "Загляни в вишлист — там есть идеи" if days else "Не забудь поздравить"
     created = notifications.create(
         db,
         user.id,
@@ -85,12 +85,8 @@ def anniversary_reminders(
     years = anniversary.year - since.year
     if years > 0 and days in ANNIVERSARY_DAYS_BEFORE:
         word = plural(years, "год", "года", "лет")
-        title = (
-            f"💍 Через неделю {years} {word} вместе"
-            if days
-            else f"💍 Сегодня {years} {word} вместе!"
-        )
-        body = "Время придумать что-то особенное ✨" if days else "С годовщиной! 💕"
+        title = f"Через неделю {years} {word} вместе" if days else f"Сегодня {years} {word} вместе!"
+        body = "Время придумать что-то особенное" if days else "С годовщиной!"
         result.append(
             notifications.create(
                 db,
@@ -110,8 +106,8 @@ def anniversary_reminders(
                 db,
                 user.id,
                 NotificationType.ANNIVERSARY,
-                f"✨ Вы вместе уже {together} дней!",
-                "Отличный повод для свидания — нажми «Подкинь идею» 🎲",
+                f"Вы вместе уже {together} дней!",
+                "Отличный повод для свидания — нажми «Подкинь идею»",
                 data={"screen": "suggest"},
                 dedupe_key=f"milestone:{together}",
             )
@@ -148,7 +144,7 @@ def task_reminders(db: Session, user: User, couple: Couple, today: date) -> list
         db,
         user.id,
         NotificationType.TASKS_TODAY,
-        "📋 " + ", ".join(parts),
+        ", ".join(parts),
         titles,
         data={"screen": "tasks"},
         dedupe_key=f"tasks:{today.isoformat()}",
@@ -170,9 +166,9 @@ def on_this_day_reminders(
     oldest = min(memories, key=lambda m: m.happened_on)
     years = today.year - oldest.happened_on.year
     title = (
-        "📸 В этот день год назад"
+        "В этот день год назад"
         if years == 1
-        else f"📸 В этот день {years} {plural(years, 'год', 'года', 'лет')} назад"
+        else f"В этот день {years} {plural(years, 'год', 'года', 'лет')} назад"
     )
     created = notifications.create(
         db,

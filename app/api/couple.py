@@ -61,8 +61,8 @@ def join_couple(
         background,
         user,
         NotificationType.PARTNER_JOINED,
-        "💑 Вы теперь пара!",
-        "теперь мы вместе 💕",
+        "Вы теперь пара!",
+        "теперь мы вместе",
     )
     db.commit()
     db.refresh(couple)

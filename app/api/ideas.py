@@ -38,7 +38,7 @@ def notify_idea_added(db: DbSession, background: BackgroundTasks, user, idea: Id
         background,
         user,
         NotificationType.IDEA_ADDED,
-        "💡 Новая идея",
+        "Новая идея",
         f"«{idea.title}»",
         {"idea_id": idea.id},
     )
@@ -250,7 +250,7 @@ def want(
     if user.id not in idea.wanted_by:
         idea.wants.append(IdeaWant(user_id=user.id))
         both = len(idea.wants) >= 2
-        title = "❤️ Вы оба этого хотите!" if both else "❤️ Хочет тоже!"
+        title = "Вы оба этого хотите!" if both else "Хочет тоже!"
         notify_partner(
             db,
             background,

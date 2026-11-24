@@ -88,14 +88,6 @@ class TaskCategory(StrEnum):
     OTHER = "other"
 
 
-class LoveLanguage(StrEnum):
-    WORDS = "words"  # слова поддержки
-    TIME = "time"  # время вместе
-    GIFTS = "gifts"  # подарки
-    SERVICE = "service"  # помощь делом
-    TOUCH = "touch"  # прикосновения
-
-
 class NotificationCategory(StrEnum):
     """What a user can switch on and off in settings."""
 
@@ -104,7 +96,7 @@ class NotificationCategory(StrEnum):
     IDEAS = "ideas"  # новая идея, ❤️
     MEMORIES = "memories"  # новое воспоминание, фото
     WISHLIST = "wishlist"  # новое желание в вишлисте партнёра
-    LOVE_LANGUAGE = "love_language"  # партнёр прошёл тест
+    LOVE_LANGUAGE = "love_language"  # партнёр прошёл тест (любой: язык любви, извинений)
     BIRTHDAY = "birthday"  # скоро день рождения партнёра
     ANNIVERSARY = "anniversary"  # годовщина, «вместе 1000 дней»
     TASKS_DUE = "tasks_due"  # задачи на сегодня

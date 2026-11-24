@@ -41,9 +41,9 @@ def notify_about_task(
 ) -> None:
     partner = user.partner
     if assigned_now and partner is not None and task.assignee_id == partner.id:
-        type, title = NotificationType.TASK_ASSIGNED, "📋 Задача для тебя"
+        type, title = NotificationType.TASK_ASSIGNED, "Задача для тебя"
     else:
-        type, title = NotificationType.TASK_ADDED, "📋 Новая задача"
+        type, title = NotificationType.TASK_ADDED, "Новая задача"
     notify_partner(db, background, user, type, title, describe(task), {"task_id": task.id})
 
 
@@ -155,7 +155,7 @@ def mark_done(
             background,
             user,
             NotificationType.TASK_DONE,
-            "✅ Задача выполнена",
+            "Задача выполнена",
             f"«{task.title}»",
             {"task_id": task.id},
         )

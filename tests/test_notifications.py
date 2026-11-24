@@ -44,7 +44,7 @@ def test_task_added_goes_to_partner_only(
 
     newest = bell(client, sasha)[0]
     assert newest["type"] == "task_added"
-    assert newest["title"] == "📋 Новая задача"
+    assert newest["title"] == "Новая задача"
     assert newest["body"] == "Mila: «Купить продукты», до 20.11"
     assert newest["data"] == {"task_id": task["id"]}
     assert newest["actor_id"] == my_id(client, mila)
@@ -60,7 +60,7 @@ def test_task_assigned_and_done(client: TestClient, make_couple: MakeCouple) -> 
     task = client.post(
         f"{API}/couple/tasks", headers=mila, json={"title": "Врач", "assignee_id": sasha_id}
     ).json()
-    assert bell(client, sasha)[0]["title"] == "📋 Задача для тебя"
+    assert bell(client, sasha)[0]["title"] == "Задача для тебя"
 
     client.post(f"{API}/couple/tasks/{task['id']}/done", headers=sasha)
     assert bell(client, mila)[0]["type"] == "task_done"
@@ -92,7 +92,7 @@ def test_ideas_memories_photos_wishes_love_language(
     assert bell(client, sasha)[0]["type"] == "idea_added"
 
     client.post(f"{API}/couple/ideas/{idea['id']}/want", headers=sasha)
-    assert bell(client, mila)[0]["title"] == "❤️ Вы оба этого хотите!"
+    assert bell(client, mila)[0]["title"] == "Вы оба этого хотите!"
 
     memory = client.post(f"{API}/couple/memories", headers=sasha, json={"title": "Каток"}).json()
     assert bell(client, mila)[0]["type"] == "memory_added"
@@ -107,8 +107,8 @@ def test_ideas_memories_photos_wishes_love_language(
     client.post(f"{API}/wishlist/me", headers=mila, json={"title": "Пазл"})
     assert bell(client, sasha)[0]["type"] == "wish_added"
 
-    answers = {str(i): 3 for i in range(1, 21)}
-    client.post(f"{API}/love-language/test", headers=sasha, json={"answers": answers})
+    answers = {str(i): "a" for i in range(1, 31)}
+    client.post(f"{API}/tests/love", headers=sasha, json={"answers": answers})
     assert bell(client, mila)[0]["type"] == "love_language_done"
 
 
@@ -209,3 +209,15 @@ def test_devices(client: TestClient, make_couple: MakeCouple, pushed: list) -> N
     )
     client.post(f"{API}/couple/tasks", headers=mila, json={"title": "y"})
     assert pushed == []
+
+
+def test_texts_have_no_emoji(client: TestClient, make_couple: MakeCouple) -> None:
+    """The app is designed without emoji, so notification texts must not have them either."""
+    import re
+
+    mila, sasha = make_couple()
+    client.post(f"{API}/couple/tasks", headers=mila, json={"title": "x"})
+    client.post(f"{API}/couple/ideas", headers=mila, json={"title": "y", "format": "home"})
+    emoji = re.compile("[\U0001f300-\U0001faff☀-➿]")
+    for n in bell(client, sasha) + bell(client, mila):
+        assert not emoji.search(n["title"] + n["body"]), n

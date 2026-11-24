@@ -61,7 +61,7 @@ def add_wish(
         background,
         user,
         NotificationType.WISH_ADDED,
-        "🎁 Новое желание в вишлисте",
+        "Новое желание в вишлисте",
         f"«{wish.title}»",
         {"wish_id": wish.id},
     )

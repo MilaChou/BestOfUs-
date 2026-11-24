@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 from app.api import (
     auth,
@@ -8,9 +9,9 @@ from app.api import (
     gifts,
     health,
     ideas,
-    love_language,
     memories,
     notifications,
+    psy_tests,
     tasks,
     users,
     wishlist,
@@ -24,6 +25,13 @@ app = FastAPI(
     debug=settings.debug,
 )
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=settings.cors_origins,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 app.include_router(health.router, prefix=settings.api_prefix)
 app.include_router(auth.router, prefix=settings.api_prefix)
 app.include_router(users.router, prefix=settings.api_prefix)
@@ -35,5 +43,5 @@ app.include_router(gift_notes.router, prefix=settings.api_prefix)
 app.include_router(gifts.router, prefix=settings.api_prefix)
 app.include_router(tasks.router, prefix=settings.api_prefix)
 app.include_router(memories.router, prefix=settings.api_prefix)
-app.include_router(love_language.router, prefix=settings.api_prefix)
+app.include_router(psy_tests.router, prefix=settings.api_prefix)
 app.include_router(notifications.router, prefix=settings.api_prefix)

@@ -7,10 +7,10 @@ autogenerates migrations.
 from app.database import Base
 from app.models.couple import Couple
 from app.models.idea import Idea, IdeaWant
-from app.models.love_language import LoveLanguageResult
 from app.models.memory import Memory, MemoryPhoto
 from app.models.notification import Device, Notification, NotificationSettings
 from app.models.task import Task
+from app.models.test_result import TestResult
 from app.models.user import Profile, User
 from app.models.wish import GiftNote, Wish
 
@@ -21,13 +21,13 @@ __all__ = [
     "GiftNote",
     "Idea",
     "IdeaWant",
-    "LoveLanguageResult",
     "Memory",
     "MemoryPhoto",
     "Notification",
     "NotificationSettings",
     "Profile",
     "Task",
+    "TestResult",
     "User",
     "Wish",
 ]

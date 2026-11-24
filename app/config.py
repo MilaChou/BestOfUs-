@@ -14,6 +14,10 @@ class Settings(BaseSettings):
     secret_key: str
     access_token_expire_minutes: int = 60 * 24 * 7  # one week
 
+    # Web pages allowed to call the API from a browser. The phone app doesn't need this;
+    # it's for the Expo web preview (port 8081) during development.
+    cors_origins: list[str] = ["http://localhost:8081", "http://127.0.0.1:8081"]
+
     # Where uploaded photos are stored on disk (not in git).
     media_dir: str = "media"
 

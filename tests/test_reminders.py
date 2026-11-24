@@ -55,8 +55,8 @@ def test_birthday(
     )
 
     reminders.run(db_session, date(2026, 11, 13))
-    assert titles(client, mila)[0] == "🎂 Через неделю день рождения у Sasha"
-    assert pushed[-1]["title"] == "🎂 Через неделю день рождения у Sasha"
+    assert titles(client, mila)[0] == "Через неделю день рождения у Sasha"
+    assert pushed[-1]["title"] == "Через неделю день рождения у Sasha"
     assert all("день рождения" not in t for t in titles(client, sasha))  # not about yourself
 
     reminders.run(db_session, date(2026, 11, 13))  # a second run the same day changes nothing
@@ -66,8 +66,8 @@ def test_birthday(
     reminders.run(db_session, date(2026, 11, 19))
     reminders.run(db_session, date(2026, 11, 20))
     assert titles(client, mila)[:2] == [
-        "🎉 Сегодня день рождения у Sasha!",
-        "🎂 Завтра день рождения у Sasha",
+        "Сегодня день рождения у Sasha!",
+        "Завтра день рождения у Sasha",
     ]
 
 
@@ -78,12 +78,12 @@ def test_anniversary_and_milestones(
     client.patch(f"{API}/couple", headers=mila, json={"together_since": "2024-11-20"})
 
     reminders.run(db_session, date(2026, 11, 13))
-    assert titles(client, mila)[0] == "💍 Через неделю 2 года вместе"
+    assert titles(client, mila)[0] == "Через неделю 2 года вместе"
     reminders.run(db_session, date(2026, 11, 20))
-    assert titles(client, sasha)[0] == "💍 Сегодня 2 года вместе!"
+    assert titles(client, sasha)[0] == "Сегодня 2 года вместе!"
 
     reminders.run(db_session, date(2027, 8, 17))  # 1000 days after 2024-11-20
-    assert titles(client, mila)[0] == "✨ Вы вместе уже 1000 дней!"
+    assert titles(client, mila)[0] == "Вы вместе уже 1000 дней!"
 
 
 def test_tasks_today(client: TestClient, db_session: Session, make_couple: MakeCouple) -> None:
@@ -107,8 +107,8 @@ def test_tasks_today(client: TestClient, db_session: Session, make_couple: MakeC
     reminders.run(db_session, TODAY)
     mila_note = next(n for n in bell(client, mila) if n["type"] == "tasks_today")
     sasha_note = next(n for n in bell(client, sasha) if n["type"] == "tasks_today")
-    assert mila_note["title"] == "📋 1 задача на сегодня, 1 просроченная"
-    assert sasha_note["title"] == "📋 2 задачи на сегодня, 1 просроченная"
+    assert mila_note["title"] == "1 задача на сегодня, 1 просроченная"
+    assert sasha_note["title"] == "2 задачи на сегодня, 1 просроченная"
     assert "«Потом»" not in sasha_note["body"]
 
 
@@ -126,7 +126,7 @@ def test_on_this_day(client: TestClient, db_session: Session, make_couple: MakeC
     )
     reminders.run(db_session, TODAY)
     note = next(n for n in bell(client, sasha) if n["type"] == "on_this_day")
-    assert note["title"] == "📸 В этот день 3 года назад" and note["body"] == "«Первое свидание»"
+    assert note["title"] == "В этот день 3 года назад" and note["body"] == "«Первое свидание»"
 
 
 def test_nothing_to_remind(

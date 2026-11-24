@@ -15,6 +15,18 @@ uv run pytest                # tests
 uv run ruff check . && uv run ruff format .
 ```
 
+### Using the API from a phone on the same Wi-Fi
+
+`uv run fastapi dev` listens only on this computer. To reach it from a phone
+(or the Expo app) on the same Wi-Fi, listen on all network interfaces:
+
+```bash
+uv run fastapi dev --host 0.0.0.0
+```
+
+Then use `http://<this Mac's Wi-Fi IP>:8000` on the phone
+(find the IP with `ipconfig getifaddr en0`). In the Android emulator use `http://10.0.2.2:8000`.
+
 ### Database migrations
 
 Models live in `app/models/`. After changing a model:

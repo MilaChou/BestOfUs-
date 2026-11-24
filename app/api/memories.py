@@ -12,6 +12,7 @@ from app.media import delete_photo_file, photo_path, save_photo
 from app.models import Couple, Idea, Memory, MemoryPhoto, User
 from app.notifications import notify_partner
 from app.schemas.memory import MemoryCreate, MemoryRead, MemoryUpdate
+from app.timeutil import local_date
 
 router = APIRouter(prefix="/couple/memories", tags=["memories"])
 
@@ -26,7 +27,7 @@ def notify_memory_added(
         background,
         user,
         NotificationType.MEMORY_ADDED,
-        "📸 Новое воспоминание",
+        "Новое воспоминание",
         f"«{memory.title}»",
         {"memory_id": memory.id},
     )
@@ -110,7 +111,7 @@ def create_from_idea(
         idea_id=idea.id,
         title=idea.title,
         description=idea.review or idea.description,
-        happened_on=idea.done_at.date(),
+        happened_on=local_date(idea.done_at),
     )
     db.add(memory)
     db.flush()
@@ -177,7 +178,7 @@ def upload_photos(
             background,
             user,
             NotificationType.PHOTOS_ADDED,
-            "📸 Новые фото",
+            "Новые фото",
             f"{len(files)} фото в «{memory.title}»",
             {"memory_id": memory.id},
         )
